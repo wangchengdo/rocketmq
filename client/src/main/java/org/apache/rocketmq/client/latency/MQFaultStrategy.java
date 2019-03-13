@@ -56,6 +56,12 @@ public class MQFaultStrategy {
         this.sendLatencyFaultEnable = sendLatencyFaultEnable;
     }
 
+    /**
+     * 找到
+     * @param tpInfo
+     * @param lastBrokerName
+     * @return
+     */
     public MessageQueue selectOneMessageQueue(final TopicPublishInfo tpInfo, final String lastBrokerName) {
         if (this.sendLatencyFaultEnable) {
             try {
@@ -70,7 +76,7 @@ public class MQFaultStrategy {
                         pos = 0;
                     // 获取某个Broker上的MessageQueue
                     MessageQueue mq = tpInfo.getMessageQueueList().get(pos);
-                    // 判断broker是否能通过延迟策略表，具体看LatencyFaultToleranceImpl实现
+                    // 判断broker是否有延迟前科，如果有看是否已出狱，具体看LatencyFaultToleranceImpl实现
                     if (latencyFaultTolerance.isAvailable(mq.getBrokerName())) {
                         // 为空表示没有加入到延迟表，可用，lastBrokerName是？
                         if (null == lastBrokerName || mq.getBrokerName().equals(lastBrokerName))
@@ -82,10 +88,12 @@ public class MQFaultStrategy {
                 // 取到某个topic在这个broker上的的写队列数量验证下
                 int writeQueueNums = tpInfo.getQueueIdByBroker(notBestBroker);
                 if (writeQueueNums > 0) {
-                    // 轮询出一个queue
+                    // 轮询topic的所有broker的所有queue
                     final MessageQueue mq = tpInfo.selectOneMessageQueue();
                     if (notBestBroker != null) {
+                        // 修改broker
                         mq.setBrokerName(notBestBroker);
+                        // queueid要设置成本broker上可写队列数范围内
                         mq.setQueueId(tpInfo.getSendWhichQueue().getAndIncrement() % writeQueueNums);
                     }
                     return mq;

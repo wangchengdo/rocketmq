@@ -103,7 +103,7 @@ public class TopicPublishInfo {
     }
 
     /**
-     *
+     * 实际是轮询这个topic上所有broker的所有queueid
      * @return
      */
     public MessageQueue selectOneMessageQueue() {
