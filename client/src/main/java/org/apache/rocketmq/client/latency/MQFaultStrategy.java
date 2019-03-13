@@ -62,20 +62,27 @@ public class MQFaultStrategy {
                 // getSendWhichQueue()返回的是一个ThreadLocal封装类，getAndIncrement()返回一个随机数，
                 // 同一线程连续调用返回的是递增的整形
                 int index = tpInfo.getSendWhichQueue().getAndIncrement();
+                // tpInfo描述单个topic，遍历单个topic上所有Broker
                 for (int i = 0; i < tpInfo.getMessageQueueList().size(); i++) {
+                    // 轮询所有Broker
                     int pos = Math.abs(index++) % tpInfo.getMessageQueueList().size();
                     if (pos < 0)
                         pos = 0;
+                    // 获取某个Broker上的MessageQueue
                     MessageQueue mq = tpInfo.getMessageQueueList().get(pos);
+                    // 判断broker是否能通过延迟策略表，具体看LatencyFaultToleranceImpl实现
                     if (latencyFaultTolerance.isAvailable(mq.getBrokerName())) {
+                        // 为空表示没有加入到延迟表，可用，lastBrokerName是？
                         if (null == lastBrokerName || mq.getBrokerName().equals(lastBrokerName))
                             return mq;
                     }
                 }
-
+                // 没有找到比较合适的broker，就从延迟表中挑比较好的broker，具体算法见LatencyFaultToleranceImpl
                 final String notBestBroker = latencyFaultTolerance.pickOneAtLeast();
+                // 取到某个topic在这个broker上的的写队列数量验证下
                 int writeQueueNums = tpInfo.getQueueIdByBroker(notBestBroker);
                 if (writeQueueNums > 0) {
+                    // 轮询出一个queue
                     final MessageQueue mq = tpInfo.selectOneMessageQueue();
                     if (notBestBroker != null) {
                         mq.setBrokerName(notBestBroker);
@@ -95,9 +102,17 @@ public class MQFaultStrategy {
         return tpInfo.selectOneMessageQueue(lastBrokerName);
     }
 
+    /**
+     * 将延迟的Broker加入到ConcurrentHashMap中，DefaultMQProducerImpl发送消息失败时会调用
+     * @param brokerName
+     * @param currentLatency
+     * @param isolation
+     */
     public void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
         if (this.sendLatencyFaultEnable) {
+            // 如果直接想隔离就使用30S这个档次的不可用时间，否则根据超时时间来确定不可用时间档位
             long duration = computeNotAvailableDuration(isolation ? 30000 : currentLatency);
+            // 添加或更新到Map中
             this.latencyFaultTolerance.updateFaultItem(brokerName, currentLatency, duration);
         }
     }

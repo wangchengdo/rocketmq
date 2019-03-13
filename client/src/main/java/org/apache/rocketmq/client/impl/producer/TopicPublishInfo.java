@@ -26,8 +26,21 @@ import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 public class TopicPublishInfo {
     private boolean orderTopic = false;
     private boolean haveTopicRouterInfo = false;
+
+    /**
+     * MessageQueue是一个队列，这个list是这个topic下所有broker的上的所有queue
+     * List的维度是queue，比较细了
+     */
     private List<MessageQueue> messageQueueList = new ArrayList<MessageQueue>();
+
+    /**
+     * 挂在线程上的一个整形记录
+     */
     private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex();
+
+    /**
+     * 一个Topic的路由信息，
+     */
     private TopicRouteData topicRouteData;
 
     public boolean isOrderTopic() {
@@ -66,6 +79,11 @@ public class TopicPublishInfo {
         this.haveTopicRouterInfo = haveTopicRouterInfo;
     }
 
+    /**
+     *
+     * @param lastBrokerName
+     * @return
+     */
     public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
         if (lastBrokerName == null) {
             return selectOneMessageQueue();
@@ -84,8 +102,14 @@ public class TopicPublishInfo {
         }
     }
 
+    /**
+     *
+     * @return
+     */
     public MessageQueue selectOneMessageQueue() {
+        // 获取递增的正数，这个线程上次发送的queue对应的正数记录
         int index = this.sendWhichQueue.getAndIncrement();
+        // 轮询出一个queue
         int pos = Math.abs(index) % this.messageQueueList.size();
         if (pos < 0)
             pos = 0;
