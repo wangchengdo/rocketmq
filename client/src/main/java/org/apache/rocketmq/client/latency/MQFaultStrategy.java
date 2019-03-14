@@ -68,7 +68,7 @@ public class MQFaultStrategy {
                 // getSendWhichQueue()返回的是一个ThreadLocal封装类，getAndIncrement()返回一个随机数，
                 // 同一线程连续调用返回的是递增的整形
                 int index = tpInfo.getSendWhichQueue().getAndIncrement();
-                // tpInfo描述单个topic，遍历单个topic上所有Broker
+                // tpInfo描述单个topic，遍历单个topic上所有Broker，当然是不在延迟冷冻期的
                 for (int i = 0; i < tpInfo.getMessageQueueList().size(); i++) {
                     // 轮询所有Broker
                     int pos = Math.abs(index++) % tpInfo.getMessageQueueList().size();
@@ -76,9 +76,10 @@ public class MQFaultStrategy {
                         pos = 0;
                     // 获取某个Broker上的MessageQueue
                     MessageQueue mq = tpInfo.getMessageQueueList().get(pos);
-                    // 判断broker是否有延迟前科，如果有看是否已出狱，具体看LatencyFaultToleranceImpl实现
+                    // 判断broker是否在延迟冷冻期，如果有看是否已出狱，具体看LatencyFaultToleranceImpl实现
+                    // 先挑没有延时的
                     if (latencyFaultTolerance.isAvailable(mq.getBrokerName())) {
-                        // 为空表示没有加入到延迟表，可用，lastBrokerName是？
+                        // 为空表示是第一次发送，lastBrokerName是上次发送超时的broker，不是第一次发送就一定要是上次发送超时的broker
                         if (null == lastBrokerName || mq.getBrokerName().equals(lastBrokerName))
                             return mq;
                     }
@@ -125,6 +126,11 @@ public class MQFaultStrategy {
         }
     }
 
+    /**
+     *
+     * @param currentLatency
+     * @return 0表示小于最小延迟级别
+     */
     private long computeNotAvailableDuration(final long currentLatency) {
         for (int i = latencyMax.length - 1; i >= 0; i--) {
             if (currentLatency >= latencyMax[i])

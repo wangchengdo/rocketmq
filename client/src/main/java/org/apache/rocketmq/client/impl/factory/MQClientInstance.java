@@ -488,6 +488,11 @@ public class MQClientInstance {
         }
     }
 
+    /**
+     * 手动调用，定时任务都会调用
+     * @param topic
+     * @return
+     */
     public boolean updateTopicRouteInfoFromNameServer(final String topic) {
         return updateTopicRouteInfoFromNameServer(topic, false, null);
     }
