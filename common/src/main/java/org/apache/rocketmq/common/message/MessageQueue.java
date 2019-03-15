@@ -22,6 +22,7 @@ public class MessageQueue implements Comparable<MessageQueue>, Serializable {
     private static final long serialVersionUID = 6191200464116433425L;
     private String topic;
     private String brokerName;
+    // 读写队列如何区分呢？在Producer这边就是写队列，在consumer这边就是读队列？
     private int queueId;
 
     public MessageQueue() {

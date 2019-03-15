@@ -21,7 +21,7 @@
 package org.apache.rocketmq.common.protocol.route;
 
 /**
- * 某个queue的属性
+ * 一个topic在某个broker上所有queue的统一描述
  */
 public class QueueData implements Comparable<QueueData> {
     private String brokerName;

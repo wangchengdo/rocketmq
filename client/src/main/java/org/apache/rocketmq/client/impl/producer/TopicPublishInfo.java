@@ -116,8 +116,9 @@ public class TopicPublishInfo {
         return this.messageQueueList.get(pos);
     }
 
-    //
+    // 这个broker上这个topic的队列的写队列数
     public int getQueueIdByBroker(final String brokerName) {
+        // 遍历总队列
         for (int i = 0; i < topicRouteData.getQueueDatas().size(); i++) {
             final QueueData queueData = this.topicRouteData.getQueueDatas().get(i);
             if (queueData.getBrokerName().equals(brokerName)) {

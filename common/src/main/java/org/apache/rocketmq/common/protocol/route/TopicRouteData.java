@@ -28,7 +28,7 @@ import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 public class TopicRouteData extends RemotingSerializable {
     private String orderTopicConf;
     /**
-     * 这个Topic下所有broker的所有queue，维度是queue
+     * 这个Topic在每个broker上队列的总描述
      */
     private List<QueueData> queueDatas;
 

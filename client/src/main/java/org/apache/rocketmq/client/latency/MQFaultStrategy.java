@@ -70,7 +70,7 @@ public class MQFaultStrategy {
                 int index = tpInfo.getSendWhichQueue().getAndIncrement();
                 // tpInfo描述单个topic，遍历单个topic上所有Broker，当然是不在延迟冷冻期的
                 for (int i = 0; i < tpInfo.getMessageQueueList().size(); i++) {
-                    // 轮询所有Broker
+                    // 轮询所有queue
                     int pos = Math.abs(index++) % tpInfo.getMessageQueueList().size();
                     if (pos < 0)
                         pos = 0;
